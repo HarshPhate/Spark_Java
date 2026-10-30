@@ -1,0 +1,42 @@
+services:
+
+  mysql-db:
+    image: mysql:8
+    container_name: compose-mysql-db
+
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dockerdb
+
+    ports:
+      - "3309:3306"
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+
+  springboot-app:
+    build: .
+    container_name: compose-springboot-app
+
+    ports:
+      - "9090:9090"
+
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql-db:3306/dockerdb?createDatabaseIfNotExist=true&useSSL=false"
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+
+
+volumes:
+  mysql_data:
